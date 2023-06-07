@@ -14,6 +14,16 @@ type Mixer(clientIp: string, port: int) =
             { addressPattern = $"{Mixer.PathPrefix}cd"
               arguments = [ OscString path ] }
 
+    member this.Stereo(path: string) =
+        this.Run
+            { addressPattern = $"{Mixer.PathPrefix}stereo"
+              arguments = [ OscString path ] }
+
+    member this.Mono(path: string) =
+        this.Run
+            { addressPattern = $"{Mixer.PathPrefix}mono"
+              arguments = [ OscString path ] }
+
     member this.Play(track: string, file: string) =
         this.Run
             { addressPattern = $"{Mixer.PathPrefix}{track}/play"
@@ -43,6 +53,11 @@ type Mixer(clientIp: string, port: int) =
         this.Run
             { addressPattern = $"{Mixer.PathPrefix}{track}/unmute"
               arguments = [] }
+
+    member this.Fade(track: string, level: float32) =
+        this.Run
+            { addressPattern = $"{Mixer.PathPrefix}{track}/fader"
+              arguments = [ OscFloat32 level ] }
 
     member this.Fade(track: string, level: float32, duration: int) =
         this.Run

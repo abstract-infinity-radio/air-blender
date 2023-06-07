@@ -7,11 +7,13 @@
 
   <ItemGroup>
     <Compile Include="Mixer.fs" />
+    <Compile Include="Data.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FSharp.Osc" Version="1.0.3" />
+    <PackageReference Include="Legivel" Version="0.4.6" />
   </ItemGroup>
 
 </Project>
