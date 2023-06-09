@@ -3,11 +3,23 @@
 open FSharp.Osc
 
 type Mixer(clientIp: string, port: int) =
-    let Client = new OscUdpClient(clientIp, port)
+    let client = new OscUdpClient(clientIp, port)
+
+    let mailbox =
+        MailboxProcessor.Start(fun inbox ->
+            let rec loop () =
+                async {
+                    let! command = inbox.Receive()
+                    printfn $"Sending OSC command: {command}"
+                    client.SendMessage command |> ignore
+                    return! loop ()
+                }
+
+            loop ())
 
     static member PathPrefix = "/airmix/"
 
-    member this.Run message = Client.SendMessage message |> ignore
+    member this.Run message = mailbox.Post message
 
     member this.Cd(path: string) =
         this.Run
@@ -24,6 +36,11 @@ type Mixer(clientIp: string, port: int) =
             { addressPattern = $"{Mixer.PathPrefix}mono"
               arguments = [ OscString path ] }
 
+    member this.Globepan() =
+        this.Run
+            { addressPattern = $"{Mixer.PathPrefix}globepan"
+              arguments = [] }
+
     member this.Play(track: string, file: string) =
         this.Run
             { addressPattern = $"{Mixer.PathPrefix}{track}/play"
@@ -33,6 +50,11 @@ type Mixer(clientIp: string, port: int) =
         this.Run
             { addressPattern = $"{Mixer.PathPrefix}{track}/play"
               arguments = [ OscString file; OscString start ] }
+
+    member this.Play(track: string, file: string, start: string, stop: string) =
+        this.Run
+            { addressPattern = $"{Mixer.PathPrefix}{track}/play"
+              arguments = [ OscString file; OscString start; OscString stop ] }
 
     member this.Loop(track: string, file: string, start, stop) =
         this.Run
