@@ -47,7 +47,7 @@ let readAudioHeaders filename =
         { Filename = key
           Duration = value.duration_ms |> int |> Duration })
 
-type Library = FSharp.Collections.Map<string, AudioHeader list>
+type Library = Map<string, AudioHeader list>
 
 let loadLibrary path : Library =
     IO.Directory.GetDirectories path

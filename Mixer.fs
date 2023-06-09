@@ -90,3 +90,10 @@ type Mixer(clientIp: string, port: int) =
         this.Run
             { addressPattern = $"{Mixer.PathPrefix}{track}/fader"
               arguments = [ OscFloat32 level; OscInt32 duration; OscString curve ] }
+
+    member this.Init() =
+        this.Stop("all")
+        this.Mono("all")
+        this.Fade("all", 1.0f)
+        this.Globepan()
+        this.Unmute("all")
