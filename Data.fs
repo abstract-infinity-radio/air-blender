@@ -16,11 +16,13 @@ type Duration =
     | Duration of int
 
     member this.Value =
-        function
-        | Duration durationInMilliseconds -> durationInMilliseconds
+        let (Duration value) = this
+        value
 
-    override this.ToString () =
-        let (Duration durationInMilliseconds) = this
+module Duration =
+
+    let toStringHMS (duration: Duration) =
+        let (Duration durationInMilliseconds) = duration
         let totalSeconds = durationInMilliseconds / 1000
         let milliseconds = durationInMilliseconds % 1000
         let hours = totalSeconds / 3600
@@ -44,3 +46,10 @@ let readAudioHeaders filename =
     |> List.map (fun (key, value) ->
         { Filename = key
           Duration = value.duration_ms |> int |> Duration })
+
+type Library = FSharp.Collections.Map<string, AudioHeader list>
+
+let loadLibrary path : Library =
+    IO.Directory.GetDirectories path
+    |> Array.map (fun path -> IO.DirectoryInfo(path).Name, readAudioHeaders $"{path}/audioheaders.yaml")
+    |> Map.ofArray

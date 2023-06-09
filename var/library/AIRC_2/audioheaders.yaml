@@ -1,0 +1,65 @@
+---
+AIRR_101.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
+AIRR_102.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
+AIRR_103.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
+AIRR_104.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
+AIRR_105.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
+AIRR_106.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
+AIRR_107.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
+AIRR_108.wav:
+  bitrate: 16
+  channels: 1
+  duration: 01:02:25.88
+  duration_ms: 3745877.333
+  encoding: Signed Integer PCM
+  samplerate: 48000
+  type: wav
