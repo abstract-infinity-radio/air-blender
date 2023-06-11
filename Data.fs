@@ -12,17 +12,17 @@ type AudioHeaderDto =
       samplerate: int
       ``type``: string }
 
-type Duration =
-    | Duration of int
+type Time =
+    | Time of int
 
     member this.Value =
-        let (Duration value) = this
+        let (Time value) = this
         value
 
-module Duration =
+module Time =
 
-    let toStringHMS (duration: Duration) =
-        let (Duration durationInMilliseconds) = duration
+    let toStringHMS (duration: Time) =
+        let (Time durationInMilliseconds) = duration
         let totalSeconds = durationInMilliseconds / 1000
         let milliseconds = durationInMilliseconds % 1000
         let hours = totalSeconds / 3600
@@ -31,7 +31,7 @@ module Duration =
         $"{hours}:{minutes}:{seconds}.{milliseconds}"
 
 type AudioHeader =
-    { Filename: string; Duration: Duration }
+    { Filename: string; Duration: Time }
 
 let readAudioHeaders filename =
     let headers =
@@ -45,7 +45,7 @@ let readAudioHeaders filename =
     |> Map.toList
     |> List.map (fun (key, value) ->
         { Filename = key
-          Duration = value.duration_ms |> int |> Duration })
+          Duration = value.duration_ms |> int |> Time })
 
 type Library = Map<string, AudioHeader list>
 

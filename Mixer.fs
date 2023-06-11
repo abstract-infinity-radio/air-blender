@@ -92,7 +92,7 @@ type Mixer(clientIp: string, port: int) =
               arguments = [ OscFloat32 level; OscInt32 duration; OscString curve ] }
 
     member this.Init() =
-        this.Stop("all")
+        // this.Stop("all")
         this.Mono("all")
         this.Fade("all", 1.0f)
         this.Globepan()
