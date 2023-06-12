@@ -16,7 +16,7 @@ type CliArguments =
     | [<Unique; EqualsAssignmentOrSpaced>] Mixer_Port of mixerPort: int
     | [<Unique; EqualsAssignmentOrSpaced>] Library_Path of libraryPath: string
     | [<Unique; EqualsAssignmentOrSpaced>] Audio_Headers_Path of audioHeadersPath: string
-    | Audio_Books of audioBooks: string list
+    | [<Unique>] Audio_Books of audioBook: string list
 
     interface IArgParserTemplate with
         member s.Usage =
@@ -67,7 +67,7 @@ let main argv =
         mixer.Init()
 
         let audioHeaders =
-            match options.GetResult(Audio_Books) with
+            match options.GetResult(Audio_Books, defaultValue=[]) with
             | [] -> library.Values |> Seq.collect id |> Seq.toList
             | audioBooks -> audioBooks |> List.collect (fun audioBook -> library[audioBook])
 
@@ -76,7 +76,7 @@ let main argv =
             mixer.Stop("all")
             Threading.Thread.Sleep 100)
 
-        printfn "Press 'q' to quit, 'r' to restart playback."
+        printfn "Press 'r' to restart or 'q' to quit."
 
         let createTrackAgents () =
             [ 1..8 ]
@@ -90,7 +90,7 @@ let main argv =
             | 'Q' -> mixer.Stop("all")
             | 'r'
             | 'R' ->
-                printfn "Restarting playback."
+                printfn "Restarting..."
 
                 // Cancel all track agents, inittialize the mixer and create a new set of track agents
                 trackAgents
