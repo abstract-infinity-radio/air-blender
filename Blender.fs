@@ -121,7 +121,7 @@ let trackAgent
 
                         return! loop ()
                     finally
-                        ()
+                        inbox.Dispose()
                 }
 
             loop ()),
