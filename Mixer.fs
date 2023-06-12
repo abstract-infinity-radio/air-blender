@@ -10,7 +10,7 @@ type Mixer(clientIp: string, port: int) =
             let rec loop () =
                 async {
                     let! command = inbox.Receive()
-                    printfn $"Sending OSC command: {command}"
+                    // printfn $"Sending OSC command: {command}"
                     client.SendMessage command |> ignore
                     return! loop ()
                 }
@@ -92,7 +92,6 @@ type Mixer(clientIp: string, port: int) =
               arguments = [ OscFloat32 level; OscInt32 duration; OscString curve ] }
 
     member this.Init() =
-        // this.Stop("all")
         this.Mono("all")
         this.Fade("all", 1.0f)
         this.Globepan()

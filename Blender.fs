@@ -99,19 +99,31 @@ let playSlidingLoop (mixer: Mixer) (config: SlidingLoopConfig) track (audioHeade
             do! Async.Sleep(loopDuration)
     }
 
-let trackAgent (mixer: Mixer) (config: Config) (track: string) (audioHeaders: AudioHeader list) =
+let trackAgent
+    (cts: Threading.CancellationTokenSource)
+    (mixer: Mixer)
+    (config: Config)
+    (track: string)
+    (audioHeaders: AudioHeader list)
+    =
     let rnd = new Random()
 
-    MailboxProcessor.Start(fun inbox ->
-        let rec loop () =
-            async {
-                do!
-                    match rnd.Next(10) with
-                    | i when i <= 7 -> playLinear mixer config.Liner track audioHeaders
-                    | i when i <= 8 -> playSlidingLoop mixer config.SlidingLoop track audioHeaders
-                    | _ -> playLoop mixer config.Loop track audioHeaders
+    MailboxProcessor.Start(
+        (fun inbox ->
+            let rec loop () =
+                async {
+                    try
+                        do!
+                            match rnd.Next(10) with
+                            | i when i <= 7 -> playLinear mixer config.Liner track audioHeaders
+                            | i when i <= 8 -> playSlidingLoop mixer config.SlidingLoop track audioHeaders
+                            | _ -> playLoop mixer config.Loop track audioHeaders
 
-                return! loop ()
-            }
+                        return! loop ()
+                    finally
+                        ()
+                }
 
-        loop ())
+            loop ()),
+        cts.Token
+    )

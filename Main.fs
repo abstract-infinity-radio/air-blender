@@ -16,6 +16,7 @@ type CliArguments =
     | [<Unique; EqualsAssignmentOrSpaced>] Mixer_Port of mixerPort: int
     | [<Unique; EqualsAssignmentOrSpaced>] Library_Path of libraryPath: string
     | [<Unique; EqualsAssignmentOrSpaced>] Audio_Headers_Path of audioHeadersPath: string
+    | Audio_Books of audioBooks: string list
 
     interface IArgParserTemplate with
         member s.Usage =
@@ -25,6 +26,7 @@ type CliArguments =
             | Library_Path _ -> $"specify a library path. Default is '{defaultCliArguments.Library_Path}'."
             | Audio_Headers_Path _ ->
                 $"specify a path to audio headers (when running on a computer without the full library). Default is '{defaultCliArguments.Audio_Headers_Path}'."
+            | Audio_Books _ -> $"specify a list library audio books to play from. Default is all audio books."
 
 let config =
     { Liner =
@@ -64,14 +66,42 @@ let main argv =
 
         mixer.Init()
 
-        let audioBook = "AIRC_1"
+        let audioHeaders =
+            match options.GetResult(Audio_Books) with
+            | [] -> library.Values |> Seq.collect id |> Seq.toList
+            | audioBooks -> audioBooks |> List.collect (fun audioBook -> library[audioBook])
 
-        for i in [ 1..8 ] do
-            trackAgent mixer config (string i) library[audioBook] |> ignore
+        // Stop playing when Ctrl+C is pressed
+        Console.CancelKeyPress.AddHandler(fun _ _ ->
+            mixer.Stop("all")
+            Threading.Thread.Sleep 100)
 
-        Async.RunSynchronously(async { do Console.ReadKey() |> ignore })
+        printfn "Press 'q' to quit, 'r' to restart playback."
 
-        mixer.Stop("all")
+        let createTrackAgents () =
+            [ 1..8 ]
+            |> List.map (fun i ->
+                let cts = new Threading.CancellationTokenSource()
+                (trackAgent cts mixer config (string i) audioHeaders), cts)
+
+        let rec loop trackAgents =
+            match Console.ReadKey(true).KeyChar with
+            | 'q'
+            | 'Q' -> mixer.Stop("all")
+            | 'r'
+            | 'R' ->
+                printfn "Restarting playback."
+
+                // Cancel all track agents, inittialize the mixer and create a new set of track agents
+                trackAgents
+                |> List.iter (fun (agent, (cts: Threading.CancellationTokenSource)) -> cts.Cancel())
+
+                mixer.Init()
+                loop (createTrackAgents ())
+
+            | _ -> loop (trackAgents)
+
+        loop (createTrackAgents ())
 
     with e ->
         printfn "%s" e.Message
