@@ -30,26 +30,28 @@ module Time =
         let seconds = totalSeconds - (hours * 3600) - (minutes * 60)
         $"{hours}:{minutes}:{seconds}.{milliseconds}"
 
-type AudioHeader =
-    { Filename: string; Duration: Time }
+type AudioHeader = { Filename: string; Duration: Time }
 
-let readAudioHeaders filename =
+let readAudioHeaders audioHeadersFilename bookPath =
+
     let headers =
-        IO.File.ReadLines filename
+        IO.File.ReadLines audioHeadersFilename
         |> String.concat "\n"
         |> Deserialize<Map<string, AudioHeaderDto>>
 
     match headers.Head with
     | Success headers -> headers.Data
-    | Error error -> failwith $"Errror parsing audio headers from {filename}: {error}"
+    | Error error -> failwith $"Errror parsing audio headers from {audioHeadersFilename}: {error}"
     |> Map.toList
     |> List.map (fun (key, value) ->
-        { Filename = key
+        { Filename = IO.Path.Join(bookPath, key)
           Duration = value.duration_ms |> int |> Time })
 
 type Library = Map<string, AudioHeader list>
 
-let loadLibrary path : Library =
-    IO.Directory.GetDirectories path
-    |> Array.map (fun path -> IO.DirectoryInfo(path).Name, readAudioHeaders $"{path}/audioheaders.yaml")
+let loadLibrary audioHeadersPath libraryPath : Library =
+    IO.Directory.GetDirectories audioHeadersPath
+    |> Array.map (fun bookPath ->
+        IO.DirectoryInfo(bookPath).Name,
+        readAudioHeaders (IO.Path.Join(bookPath, "audioheaders.yaml")) (IO.Path.Join(libraryPath, IO.DirectoryInfo(bookPath).Name)))
     |> Map.ofArray

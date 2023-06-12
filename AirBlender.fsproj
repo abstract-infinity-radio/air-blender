@@ -8,10 +8,12 @@
   <ItemGroup>
     <Compile Include="Mixer.fs" />
     <Compile Include="Data.fs" />
+    <Compile Include="Blender.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Argu" Version="6.1.1" />
     <PackageReference Include="FSharp.Osc" Version="1.0.3" />
     <PackageReference Include="Legivel" Version="0.4.6" />
   </ItemGroup>

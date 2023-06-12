@@ -1,118 +1,79 @@
 ﻿open System
+open Argu
 
 open Air.Blender.Data
 open Air.Blender.Mixer
+open Air.Blender.Blender
 
-let rnd = new Random()
+let defaultCliArguments =
+    {| Mixer_Host = "127.0.0.1"
+       Mixer_Port = 3000
+       Library_Path = "/var/air/data/library"
+       Audio_Headers_Path = "/var/air/data/library" |}
 
-let fadeDuration = 5_000
-let minDuration = 1_000
-let maxDuration = 30_000
+type CliArguments =
+    | [<Unique; EqualsAssignmentOrSpaced>] Mixer_Host of mixerHost: string
+    | [<Unique; EqualsAssignmentOrSpaced>] Mixer_Port of mixerPort: int
+    | [<Unique; EqualsAssignmentOrSpaced>] Library_Path of libraryPath: string
+    | [<Unique; EqualsAssignmentOrSpaced>] Audio_Headers_Path of audioHeadersPath: string
 
-let minLoopDuration = 100
-let maxLoopDuration = 2_000
-let minLoopTotalDuration = 5_000
-let maxLoopTotalDuration = 10_000
-let loopFadeDuration = 20_000
+    interface IArgParserTemplate with
+        member s.Usage =
+            match s with
+            | Mixer_Host _ -> $"specify a mixer host or an IP address. Default is '{defaultCliArguments.Mixer_Host}'."
+            | Mixer_Port _ -> $"specify a mixer port. Default is '{defaultCliArguments.Mixer_Port}'."
+            | Library_Path _ -> $"specify a library path. Default is '{defaultCliArguments.Library_Path}'."
+            | Audio_Headers_Path _ ->
+                $"specify a path to audio headers (when running on a computer without the full library). Default is '{defaultCliArguments.Audio_Headers_Path}'."
 
-// 7P9
-let mixer = Mixer("10.0.1.123", 3000)
-let libraryPath = @"/var/air/data/library"
+let config =
+    { Liner =
+        { MinDuration = 1_000
+          MaxDuration = 30_000
+          FadeDuration = 5_000 }
+      Loop =
+        { MinDuration = 100
+          MaxDuration = 2_000
+          MinTotalDuration = 5_000
+          MaxTotalDuration = 10_000
+          FadeDuration = 20_000 }
+      SlidingLoop =
+        { MinLoopDuration = 500
+          MaxLoopDuration = 2_000
+          MinLoopStep = 100
+          MaxLoopStep = 500
+          MinTotalDuration = 10_000
+          MaxTotalDuration = 20_000 } }
 
-// RTV
-// let mixer = Mixer("172.18.30.39", 3000)
-// let libraryPath = @"/home/gregor/temp/airfront"
+[<EntryPoint>]
+let main argv =
+    try
+        let parser = ArgumentParser.Create<CliArguments>(programName = "air-blender")
+        let options = parser.ParseCommandLine(inputs = argv, raiseOnUsage = true)
 
-let library = loadLibrary "var/library"
-let audioBook = "AIRC_2"
+        let library =
+            loadLibrary
+                (options.GetResult(Audio_Headers_Path, defaultValue = defaultCliArguments.Audio_Headers_Path))
+                (options.GetResult(Library_Path, defaultValue = defaultCliArguments.Library_Path))
 
-let playLinear track (audioHeaders: AudioHeader list) =
-    async {
-        let audio = audioHeaders[rnd.Next(audioHeaders.Length)]
+        let mixer =
+            Mixer(
+                options.GetResult(Mixer_Host, defaultValue = defaultCliArguments.Mixer_Host),
+                options.GetResult(Mixer_Port, defaultValue = defaultCliArguments.Mixer_Port)
+            )
 
-        let start = rnd.Next(audio.Duration.Value - (minDuration + 2 * fadeDuration))
-        let duration = rnd.Next(minDuration, min (audio.Duration.Value - start) maxDuration)
+        mixer.Init()
 
-        mixer.Fade(track, 0f)
+        let audioBook = "AIRC_1"
 
-        mixer.Play(
-            track,
-            audio.Filename,
-            Time.toStringHMS (Time start)
-        // Time.toStringHMS (Time(start + duration + 2 * fadeDuration))
-        )
+        for i in [ 1..8 ] do
+            trackAgent mixer config (string i) library[audioBook] |> ignore
 
-        mixer.Fade(track, 1.0f, fadeDuration, "sin")
-        do! Async.Sleep(fadeDuration)
+        Async.RunSynchronously(async { do Console.ReadKey() |> ignore })
 
-        do! Async.Sleep(duration)
+        mixer.Stop("all")
 
-        mixer.Fade(track, 0f, fadeDuration, "sin")
-        do! Async.Sleep(fadeDuration)
-    }
+    with e ->
+        printfn "%s" e.Message
 
-let playLoop track (audioHeaders: AudioHeader list) =
-    async {
-        let audio = audioHeaders[rnd.Next(audioHeaders.Length)]
-
-        let start = rnd.Next(audio.Duration.Value - minLoopDuration)
-
-        let duration =
-            rnd.Next(minLoopDuration, min (audio.Duration.Value - start) maxLoopDuration)
-
-        mixer.Fade(track, 0f)
-
-        mixer.Loop(track, audio.Filename, Time.toStringHMS (Time start), Time.toStringHMS (Time(start + duration)))
-
-        mixer.Fade(track, 1f, fadeDuration, "sin")
-        do! Async.Sleep(rnd.Next(loopFadeDuration))
-
-        do! Async.Sleep(rnd.Next(minLoopTotalDuration, maxLoopTotalDuration))
-
-        mixer.Fade(track, 0f, fadeDuration, "sin")
-        do! Async.Sleep(rnd.Next(loopFadeDuration))
-    }
-
-let playSlidingLoop track (audioHeaders: AudioHeader list) =
-    async {
-        let audio = audioHeaders[rnd.Next(audioHeaders.Length)]
-
-        let loopLength = rnd.Next(500, 2_000)
-        let loopStep = rnd.Next(100, 500)
-        let loopWindow = rnd.Next(10_000, 20_000)
-
-        let start = rnd.Next(audio.Duration.Value)
-
-        mixer.Fade(track, 1f)
-
-        for i in [ 0 .. (loopWindow / loopStep) ] do
-            mixer.Play(track, audio.Filename, Time.toStringHMS (Time(start + i * loopStep)))
-
-            do! Async.Sleep(loopLength)
-    }
-
-let trackAgent (track: string) (audioHeaders: AudioHeader list) =
-    let rnd = new Random()
-
-    MailboxProcessor.Start(fun inbox ->
-        let rec loop () =
-            async {
-                do!
-                    match rnd.Next(10) with
-                    | i when i <= 7 -> playLinear track audioHeaders
-                    | i when i <= 8 -> playSlidingLoop track audioHeaders
-                    | _ -> playLoop track audioHeaders
-
-                return! loop ()
-            }
-
-        loop ())
-
-mixer.Init()
-mixer.Cd(IO.Path.Join(libraryPath, audioBook))
-
-for i in [ 1..8 ] do
-    trackAgent (string i) library[audioBook] |> ignore
-
-Async.RunSynchronously(async { do Console.ReadKey() |> ignore })
-mixer.Stop("all")
+    0
