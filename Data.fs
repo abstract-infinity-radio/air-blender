@@ -53,5 +53,7 @@ let loadLibrary audioHeadersPath libraryPath : Library =
     IO.Directory.GetDirectories audioHeadersPath
     |> Array.map (fun bookPath ->
         IO.DirectoryInfo(bookPath).Name,
-        readAudioHeaders (IO.Path.Join(bookPath, "audioheaders.yaml")) (IO.Path.Join(libraryPath, IO.DirectoryInfo(bookPath).Name)))
+        readAudioHeaders
+            (IO.Path.Join(bookPath, "audioheaders.yaml"))
+            (IO.Path.Join(libraryPath, IO.DirectoryInfo(bookPath).Name)))
     |> Map.ofArray
