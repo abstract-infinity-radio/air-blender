@@ -29,7 +29,8 @@ type CliArguments =
             | Audio_Books _ -> $"specify a list library audio books to play from. Default is all audio books."
 
 let config =
-    { Liner =
+    { AudioTracks = 8
+      Liner =
         { MinDuration = 1_000
           MaxDuration = 30_000
           FadeDuration = 5_000 }
@@ -79,7 +80,7 @@ let main argv =
         printfn "Press 'r' to restart or 'q' to quit."
 
         let createTrackAgents () =
-            [ 1..8 ]
+            [ 1..config.AudioTracks ]
             |> List.map (fun i ->
                 let cts = new Threading.CancellationTokenSource()
                 (trackAgent cts mixer config (string i) audioHeaders), cts)

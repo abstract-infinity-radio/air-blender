@@ -26,7 +26,8 @@ type SlidingLoopConfig =
       MaxTotalDuration: int }
 
 type Config =
-    { Liner: LinerConfig
+    { AudioTracks: int
+      Liner: LinerConfig
       Loop: LoopConfig
       SlidingLoop: SlidingLoopConfig }
 
