@@ -2,6 +2,28 @@
 
 open FSharp.Osc
 
+type MonitoringMode =
+    | Auto
+    | Mirror
+    | Coarse
+    | Off
+
+    override this.ToString() =
+        match this with
+        | Auto -> "auto"
+        | Mirror -> "mirror"
+        | Coarse -> "coarse"
+        | Off -> "off"
+
+type AliveSignal =
+    | Start
+    | Stop
+
+    override this.ToString() =
+        match this with
+        | Start -> "start"
+        | Stop -> "stop"
+
 type Mixer(clientIp: string, port: int) =
     let client = new OscUdpClient(clientIp, port)
 
@@ -25,6 +47,16 @@ type Mixer(clientIp: string, port: int) =
         this.Run
             { addressPattern = $"{Mixer.PathPrefix}cd"
               arguments = [ OscString path ] }
+
+    member this.SetMonitoringMode(mode: MonitoringMode) =
+        this.Run
+            { addressPattern = $"{Mixer.PathPrefix}setmode"
+              arguments = [ OscString(mode.ToString()) ] }
+
+    member this.AliveSignal(mode: AliveSignal) =
+        this.Run
+            { addressPattern = $"{Mixer.PathPrefix}alivesig"
+              arguments = [ OscString(mode.ToString()) ] }
 
     member this.Stereo(path: string) =
         this.Run
@@ -92,6 +124,8 @@ type Mixer(clientIp: string, port: int) =
               arguments = [ OscFloat32 level; OscInt32 duration; OscString curve ] }
 
     member this.Init() =
+        this.SetMonitoringMode(Off)
+        this.AliveSignal(Stop)
         this.Mono("all")
         this.Fade("all", 1.0f)
         this.Globepan()
