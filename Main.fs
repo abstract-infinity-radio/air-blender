@@ -93,7 +93,7 @@ let main argv =
             | 'R' ->
                 printfn "Restarting..."
 
-                // Cancel all track agents, inittialize the mixer and create a new set of track agents
+                // Cancel all track agents, initialize the mixer and create a new set of track agents
                 trackAgents
                 |> List.iter (fun (agent, (cts: Threading.CancellationTokenSource)) -> cts.Cancel())
 
